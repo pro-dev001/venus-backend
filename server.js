@@ -199,16 +199,23 @@ app.post('/api/auth/change-password', verifyToken, async (req, res) => {
 /* ----------------------------
    FRONTEND SERVE
    ---------------------------- */
-app.use(express.static(path.join(__dirname, '../frontend')));
+import path from "path";
 
-// Catch-all → always send index.html for unknown routes (except API)
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/index.html'));
+const __dirname = path.resolve();
+
+// Serve static frontend files
+app.use(express.static(path.join(__dirname, 'frontend')));
+
+// Catch-all route: send index.html for any other route
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
 });
 
 /* ----------------------------
    START
    ---------------------------- */
+const PORT = process.env.PORT || 4000;
+
 app.listen(PORT, () => {
   console.log(`✅ Server listening on http://localhost:${PORT}`);
 });
