@@ -204,12 +204,13 @@ import path from "path";
 const __dirname = path.resolve();
 
 // Serve static frontend files
-app.use(express.static(path.join(__dirname, 'frontend')));
+// Serve frontend correctly from the root-level "frontend" folder
+app.use(express.static(path.join(__dirname, '../../frontend')));
 
-// Catch-all route: send index.html for any other route
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+  res.sendFile(path.join(__dirname, '../../frontend/index.html'));
 });
+
 
 /* ----------------------------
    START
