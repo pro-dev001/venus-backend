@@ -19,7 +19,6 @@ app.use(express.json());
 /* ----------------------------
    CONFIG
    ---------------------------- */
-const PORT = 4000;
 
 const PG_CONFIG = {
   host: 'localhost',
@@ -114,6 +113,12 @@ app.post('/api/auth/signup',
 
     const { email, password } = req.body;
     try {
+      // Check if user already exists
+      const existingUser = await dbQuery('SELECT * FROM users1 WHERE email = $1', [email]);
+      if (existingUser.rows.length > 0) {
+        return res.status(400).json({ error: 'User already exists' });
+      }
+
       const hashed = await bcrypt.hash(password, SALT_ROUNDS);
       await dbQuery('INSERT INTO users1 (email, password) VALUES ($1, $2)', [email, hashed]);
       res.json({ message: 'Signup successful' });
@@ -124,11 +129,11 @@ app.post('/api/auth/signup',
   }
 );
 
-// LOGIN
+// LOGIN - FIXED: Using correct table name
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   try {
-    const result = await dbQuery('SELECT * FROM users WHERE email = $1', [email]);
+    const result = await dbQuery('SELECT * FROM users1 WHERE email = $1', [email]);
     if (result.rows.length === 0) return res.status(401).json({ error: 'Invalid credentials' });
 
     const user = result.rows[0];
@@ -136,7 +141,13 @@ app.post('/api/auth/login', async (req, res) => {
     if (!match) return res.status(401).json({ error: 'Invalid credentials' });
 
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token });
+    res.json({ 
+      token,
+      user: {
+        id: user.id,
+        email: user.email
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Login failed' });
@@ -148,8 +159,16 @@ app.post('/api/auth/request-reset', async (req, res) => {
   const { email } = req.body;
   const otp = generateOtp();
   try {
-    await dbQuery('UPDATE users1 SET reset_otp = $1, reset_expires = NOW() + INTERVAL \'5 minutes\' WHERE email = $2',
-      [otp, email]);
+    // Check if user exists
+    const userCheck = await dbQuery('SELECT * FROM users1 WHERE email = $1', [email]);
+    if (userCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    await dbQuery(
+      'UPDATE users1 SET reset_otp = $1, reset_expires = NOW() + INTERVAL \'5 minutes\' WHERE email = $2',
+      [otp, email]
+    );
     await sendOtpEmail(email, otp);
     res.json({ message: 'OTP sent to email' });
   } catch (err) {
@@ -169,8 +188,10 @@ app.post('/api/auth/verify-reset', async (req, res) => {
     if (result.rows.length === 0) return res.status(400).json({ error: 'Invalid or expired OTP' });
 
     const hashed = await bcrypt.hash(newPassword, SALT_ROUNDS);
-    await dbQuery('UPDATE users1 SET password=$1, reset_otp=NULL, reset_expires=NULL WHERE email=$2',
-      [hashed, email]);
+    await dbQuery(
+      'UPDATE users1 SET password=$1, reset_otp=NULL, reset_expires=NULL WHERE email=$2',
+      [hashed, email]
+    );
     res.json({ message: 'Password reset successful' });
   } catch (err) {
     console.error(err);
@@ -196,21 +217,31 @@ app.post('/api/auth/change-password', verifyToken, async (req, res) => {
   }
 });
 
+// PROTECTED ROUTE - Get user profile
+app.get('/api/auth/me', verifyToken, async (req, res) => {
+  try {
+    const result = await dbQuery('SELECT id, email FROM users1 WHERE id = $1', [req.user.id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ user: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to get user profile' });
+  }
+});
+
 /* ----------------------------
    FRONTEND SERVE
    ---------------------------- */
-import path from "path";
-
-const __dirname = path.resolve();
 
 // Serve static frontend files
-// Serve frontend correctly from the root-level "frontend" folder
-app.use(express.static(path.join(__dirname, '../../frontend')));
+app.use(express.static(path.join(__dirname, '../frontend')));
 
+// Serve the main HTML file for all other routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../frontend/index.html'));
+  res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
-
 
 /* ----------------------------
    START
