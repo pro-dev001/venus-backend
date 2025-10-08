@@ -1,0 +1,55 @@
+{
+  "users": {
+    "solomon": {
+      "balance": 1002.85,
+      "trades": [
+        {
+          "trade_id": "19df1895-a955-445a-9463-db7ab84d10b4",
+          "pair": "EUR/USD",
+          "side": "buy",
+          "amount": 1.0,
+          "placed_at": 1759741277.975783,
+          "expires_at": 1759741282.975783,
+          "settled": true,
+          "exit_price": 1.2103015786670315,
+          "result": "win"
+        },
+        {
+          "trade_id": "9d4dce5f-2acb-440f-8711-d578c9ac03bc",
+          "pair": "EUR/USD",
+          "side": "buy",
+          "amount": 1.0,
+          "placed_at": 1759741278.5519283,
+          "expires_at": 1759741283.5519283,
+          "settled": true,
+          "exit_price": 1.2102991717844427,
+          "result": "win"
+        },
+        {
+          "trade_id": "60104145-c4ee-48de-bf4c-9b9118a3a21e",
+          "pair": "EUR/USD",
+          "side": "sell",
+          "amount": 1.0,
+          "placed_at": 1759741280.877514,
+          "expires_at": 1759741285.877514,
+          "settled": true,
+          "exit_price": 1.2102974857358262,
+          "result": "win"
+        }
+      ]
+    }
+  },
+  "pair_seeds": {
+    "EUR/USD": 73419,
+    "GBP/USD": 6080,
+    "USD/JPY": 1175,
+    "USD/CHF": 12882,
+    "AUD/USD": 88615,
+    "BTC/USD": 17175,
+    "ETH/USD": 47873,
+    "XRP/USD": 46836,
+    "LTC/USD": 81870,
+    "NZD/USD": 2294,
+    "EUR/GBP": 35859
+  }
+}
